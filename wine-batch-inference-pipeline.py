@@ -1,7 +1,7 @@
 import os
 import modal
 
-LOCAL = False
+LOCAL = True
 if LOCAL == False:
     stub = modal.Stub()
     hopsworks_image = modal.Image.debian_slim().pip_install(
@@ -29,44 +29,50 @@ def g():
     fs = project.get_feature_store()
 
     mr = project.get_model_registry()
-    model = mr.get_model("iris_model", version=1)
+    model = mr.get_model("wine_model", version=1)
     model_dir = model.download()
-    model = joblib.load(model_dir + "/iris_model.pkl")
+    model = joblib.load(model_dir + "/wine_model.pkl")
 
-    feature_view = fs.get_feature_view(name="iris", version=1)
+    feature_view = fs.get_feature_view(name="wine", version=1)
     batch_data = feature_view.get_batch_data()
 
     y_pred = model.predict(batch_data)
     # print(y_pred)
     # need to change the offset manually to have a confution matrix
-    offset = 4
-    flower = y_pred[y_pred.size-offset]
-    flower_url = "https://raw.githubusercontent.com/featurestoreorg/serverless-ml-course/main/src/01-module/assets/" + flower + ".png"
-    print("Flower predicted: " + flower)
-    img = Image.open(requests.get(flower_url, stream=True).raw)
-    img.save("./latest_iris.png")
+    offset = 3
+    wine = y_pred[y_pred.size-offset]
+    if wine == "red":
+        wine_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
+    elif wine == "white":
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/White_Wine_Glass.jpg"
+    print("Wine predicted: " + wine)
+    img = Image.open(requests.get(wine_url, stream=True).raw)
+    img.save("./latest_wine.jpg")
     dataset_api = project.get_dataset_api()
-    dataset_api.upload("./latest_iris.png", "Resources/images", overwrite=True)
+    dataset_api.upload("./latest_wine.jpg", "Resources/images", overwrite=True)
 
-    iris_fg = fs.get_feature_group(name="iris", version=1)
-    df = iris_fg.read()
+    wine_fg = fs.get_feature_group(name="wine", version=1)
+    df = wine_fg.read()
     # print(df)
-    label = df.iloc[-offset]["variety"]
-    label_url = "https://raw.githubusercontent.com/featurestoreorg/serverless-ml-course/main/src/01-module/assets/" + label + ".png"
-    print("Flower actual: " + label)
+    label = df.iloc[-offset]["type"]
+    if label == "red":
+        label_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
+    elif label == "white":
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/White_Wine_Glass.jpg"
+    print("Wine actual: " + label)
     img = Image.open(requests.get(label_url, stream=True).raw)
-    img.save("./actual_iris.png")
-    dataset_api.upload("./actual_iris.png", "Resources/images", overwrite=True)
+    img.save("./actual_wine.jpg")
+    dataset_api.upload("./actual_wine.jpg", "Resources/images", overwrite=True)
 
-    monitor_fg = fs.get_or_create_feature_group(name="iris_predictions",
+    monitor_fg = fs.get_or_create_feature_group(name="wine_predictions",
                                                 version=1,
                                                 primary_key=["datetime"],
-                                                description="Iris flower Prediction/Outcome Monitoring"
+                                                description="Wine flower Prediction/Outcome Monitoring"
                                                 )
 
     now = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
     data = {
-        'prediction': [flower],
+        'prediction': [wine],
         'label': [label],
         'datetime': [now],
     }
@@ -88,11 +94,11 @@ def g():
     # Only create the confusion matrix when our iris_predictions feature group has examples of all 3 iris flowers
     print("Number of different flower predictions to date: " +
           str(predictions.value_counts().count()))
-    if predictions.value_counts().count() == 3:
+    if predictions.value_counts().count() == 2:
         results = confusion_matrix(labels, predictions)
 
-        df_cm = pd.DataFrame(results, ['True Setosa', 'True Versicolor', 'True Virginica'],
-                             ['Pred Setosa', 'Pred Versicolor', 'Pred Virginica'])
+        df_cm = pd.DataFrame(results, ['True Red', 'True White'],
+                             ['Pred Red', 'Pred White'])
 
         cm = sns.heatmap(df_cm, annot=True)
         fig = cm.get_figure()
@@ -100,8 +106,8 @@ def g():
         dataset_api.upload("./confusion_matrix.png",
                            "Resources/images", overwrite=True)
     else:
-        print("You need 3 different flower predictions to create the confusion matrix.")
-        print("Run the batch inference pipeline more times until you get 3 different iris flower predictions")
+        print("You need 2 different wine predictions to create the confusion matrix.")
+        print("Run the batch inference pipeline more times until you get 2 different wine predictions")
 
 
 if __name__ == "__main__":
