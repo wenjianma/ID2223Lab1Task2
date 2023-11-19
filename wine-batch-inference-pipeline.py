@@ -1,7 +1,6 @@
-import os
 import modal
 
-LOCAL = True
+LOCAL = False
 if LOCAL == False:
     stub = modal.Stub()
     hopsworks_image = modal.Image.debian_slim().pip_install(
@@ -44,9 +43,11 @@ def g():
     if wine == "red":
         wine_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
     elif wine == "white":
-        wine_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/White_Wine_Glass.jpg"
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/7/71/White_Wine_Glas.jpg"
     print("Wine predicted: " + wine)
-    img = Image.open(requests.get(wine_url, stream=True).raw)
+    response = requests.get(wine_url, stream=True)
+    print("Content-Type:", response.headers.get('Content-Type'))
+    img = Image.open(response.raw)
     img.save("./latest_wine.jpg")
     dataset_api = project.get_dataset_api()
     dataset_api.upload("./latest_wine.jpg", "Resources/images", overwrite=True)
@@ -58,9 +59,10 @@ def g():
     if label == "red":
         label_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
     elif label == "white":
-        label_url = "https://upload.wikimedia.org/wikipedia/commons/5/5f/White_Wine_Glass.jpg"
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/7/71/White_Wine_Glas.jpg"
     print("Wine actual: " + label)
-    img = Image.open(requests.get(label_url, stream=True).raw)
+    response = requests.get(label_url, stream=True)
+    img = Image.open(response.raw)
     img.save("./actual_wine.jpg")
     dataset_api.upload("./actual_wine.jpg", "Resources/images", overwrite=True)
 

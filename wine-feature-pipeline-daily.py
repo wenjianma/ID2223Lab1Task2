@@ -1,4 +1,3 @@
-import os
 import modal
 
 LOCAL = False
