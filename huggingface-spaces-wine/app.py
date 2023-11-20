@@ -29,10 +29,20 @@ def wine(volatile_acidity, chlorides, density, alcohol):
     # the first element.
 #     print("Res: {0}").format(res)
     print(res)
-    if res == 3 or res == 4 or res == 5 or res == 6:
-        wine_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
-    elif res == 7 or res == 8 or res == 9:
-        wine_url = "https://upload.wikimedia.org/wikipedia/commons/7/71/White_Wine_Glas.jpg"
+    if res == 3:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/e/e9/Minsk_Metro_Line_3.png"
+    elif res == 4:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/2/28/MRT_Singapore_Destination_4.png"
+    elif res == 5:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/4/43/MRT_Singapore_Destination_5.png"
+    elif res == 6:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/0/01/L%C3%ADnea_6_V%C3%ADa_Austral_Punta_Arenas.png"
+    elif res == 7:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/b/b7/Groningen_lijn_7.png"
+    elif res == 8:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/f/f9/MRT_Singapore_Destination_8.png"
+    elif res == 9:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/f/fe/MRT_Singapore_Destination_9.png"
     response = requests.get(wine_url, stream=True)
     print("Content-Type:", response.headers.get('Content-Type'))
     img = Image.open(response.raw)

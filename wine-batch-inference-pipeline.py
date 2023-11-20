@@ -1,6 +1,8 @@
 import modal
+import requests
+from io import BytesIO
 
-LOCAL = False
+LOCAL = True
 if LOCAL == False:
     stub = modal.Stub()
     hopsworks_image = modal.Image.debian_slim().pip_install(
@@ -9,6 +11,16 @@ if LOCAL == False:
     @stub.function(image=hopsworks_image, schedule=modal.Period(days=1), secret=modal.Secret.from_name("HOPSWORKS_API_KEY"))
     def f():
         g()
+
+
+def download_image(url):
+    headers = {
+        'User-Agent': 'CoolBot/0.0 (https://example.org/coolbot/; coolbot@example.org)'}
+    response = requests.get(url, headers=headers, stream=True)
+
+    # Check if the request was successful (status code 200)
+    response.raise_for_status()
+    return response.content
 
 
 def g():
@@ -40,31 +52,56 @@ def g():
     # need to change the offset manually to have a confution matrix
     offset = 1
     wine = y_pred[y_pred.size-offset]
-    if wine == 3 or wine == 4 or wine == 5 or wine == 6:
-        wine_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
-    elif wine == 7 or wine == 8 or wine == 9:
-        wine_url = "https://upload.wikimedia.org/wikipedia/commons/7/71/White_Wine_Glas.jpg"
-    print("Wine quality predicted: " + "wine")
+    if wine == 3:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/e/e9/Minsk_Metro_Line_3.png"
+    elif wine == 4:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/c/ce/Linea_4.png"
+    elif wine == 5:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/4/43/MRT_Singapore_Destination_5.png"
+    elif wine == 6:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/0/01/L%C3%ADnea_6_V%C3%ADa_Austral_Punta_Arenas.png"
+    elif wine == 7:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/b/b7/Groningen_lijn_7.png"
+    elif wine == 8:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/f/f9/MRT_Singapore_Destination_8.png"
+    elif wine == 9:
+        wine_url = "https://upload.wikimedia.org/wikipedia/commons/f/fe/MRT_Singapore_Destination_9.png"
+
+    print("Wine quality predicted: " + str(wine))
     response = requests.get(wine_url, stream=True)
     print("Content-Type:", response.headers.get('Content-Type'))
-    img = Image.open(response.raw)
-    img.save("./latest_wine.jpg")
+    # img = Image.open(response.raw)
+    wine_image_content = download_image(wine_url)
+    img = Image.open(BytesIO(wine_image_content))
+    img.save("./latest_wine.png")
     dataset_api = project.get_dataset_api()
-    dataset_api.upload("./latest_wine.jpg", "Resources/images", overwrite=True)
+    dataset_api.upload("./latest_wine.png", "Resources/images", overwrite=True)
 
     wine_fg = fs.get_feature_group(name="wine", version=4)
     df = wine_fg.read()
     # print(df)
     label = df.iloc[-offset]["quality"]
-    if label == 3 or label == 4 or label == 5 or label == 6:
-        label_url = "https://upload.wikimedia.org/wikipedia/en/c/c0/Red_Wine_Glass.jpg"
-    elif label == 7 or label == 8 or label == 9:
-        label_url = "https://upload.wikimedia.org/wikipedia/commons/7/71/White_Wine_Glas.jpg"
-    print("Wine quality actual: " + "label")
-    response = requests.get(label_url, stream=True)
-    img = Image.open(response.raw)
-    img.save("./actual_wine.jpg")
-    dataset_api.upload("./actual_wine.jpg", "Resources/images", overwrite=True)
+    if label == 3:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/e/e9/Minsk_Metro_Line_3.png"
+    elif label == 4:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/2/28/MRT_Singapore_Destination_4.png"
+    elif label == 5:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/4/43/MRT_Singapore_Destination_5.png"
+    elif label == 6:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/0/01/L%C3%ADnea_6_V%C3%ADa_Austral_Punta_Arenas.png"
+    elif label == 7:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/b/b7/Groningen_lijn_7.png"
+    elif label == 8:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/f/f9/MRT_Singapore_Destination_8.png"
+    elif label == 9:
+        label_url = "https://upload.wikimedia.org/wikipedia/commons/f/fe/MRT_Singapore_Destination_9.png"
+    print("Wine quality actual: " + str(label))
+    # response = requests.get(label_url, stream=True)
+    # img = Image.open(response.raw)
+    wine_image_content = download_image(label_url)
+    img = Image.open(BytesIO(wine_image_content))
+    img.save("./actual_wine.png")
+    dataset_api.upload("./actual_wine.png", "Resources/images", overwrite=True)
 
     monitor_fg = fs.get_or_create_feature_group(name="wine_predictions",
                                                 version=2,
