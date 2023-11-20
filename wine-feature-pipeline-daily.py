@@ -86,7 +86,7 @@ def g():
 
     wine_df = get_random_wine()
 
-    wine_fg = fs.get_feature_group(name="wine", version=2)
+    wine_fg = fs.get_feature_group(name="wine", version=4)
     wine_fg.insert(wine_df)
 
 
