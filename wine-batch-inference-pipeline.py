@@ -2,7 +2,7 @@ import modal
 import requests
 from io import BytesIO
 
-LOCAL = True
+LOCAL = False
 if LOCAL == False:
     stub = modal.Stub()
     hopsworks_image = modal.Image.debian_slim().pip_install(
@@ -40,7 +40,7 @@ def g():
     fs = project.get_feature_store()
 
     mr = project.get_model_registry()
-    model = mr.get_model("wine_model", version=2)
+    model = mr.get_model("wine_model", version=3)
     model_dir = model.download()
     model = joblib.load(model_dir + "/wine_model.pkl")
 
@@ -104,7 +104,7 @@ def g():
     dataset_api.upload("./actual_wine.png", "Resources/images", overwrite=True)
 
     monitor_fg = fs.get_or_create_feature_group(name="wine_predictions",
-                                                version=2,
+                                                version=3,
                                                 primary_key=["datetime"],
                                                 description="Wine flower Prediction/Outcome Monitoring"
                                                 )
